@@ -293,32 +293,38 @@ bool CMasternode::GetRecentPaymentBlocks(std::vector<const CBlockIndex*>& vPayme
     vPaymentBlocks.clear();
     if (chainActive.Tip() == NULL) return false;
 
-    const CBlockIndex *BlockReading = chainActive.Tip();
-    int nBlockLimit = BlockReading->nHeight - PAYMENT_BLOCK_DEPTH;
-    if (nBlockLimit < 1)
-        nBlockLimit = 1;
+    const CBlockIndex* pindex = chainActive.Tip();
+    if (!pindex)
+        return false;
+
+    int nMinimumValidBlockHeight = pindex->nHeight - PAYMENT_BLOCK_DEPTH;
+    if (nMinimumValidBlockHeight < 1)
+        nMinimumValidBlockHeight = 1;
 
     CScript mnpayee;
     mnpayee = GetScriptForDestination(pubkey.GetID());
 
     bool fBlockFound = false;
-    while (BlockReading && BlockReading->nHeight >= nBlockLimit) {
+    CBlockIndex* pindexPrev = pindex->pprev;
+    while (pindexPrev->nHeight >= nMinimumValidBlockHeight) {
 
-        if(masternodePayments.mapMasternodeBlocks.count(BlockReading->nHeight)){
+        if(masternodePayments.mapMasternodeBlocks.count(pindexPrev->nHeight)){
             /*
                 Search for this payee, with at least 2 votes. This will aid in consensus allowing the network
                 to converge on the same payees quickly, then keep the same schedule.
             */
-            if(masternodePayments.mapMasternodeBlocks[BlockReading->nHeight].HasPayeeWithVotes(mnpayee, 2)){
-                vPaymentBlocks.emplace_back(BlockReading);
+            if (masternodePayments.mapMasternodeBlocks[pindexPrev->nHeight].HasPayeeWithVotes(mnpayee, 2)) {
+                vPaymentBlocks.emplace_back(pindexPrev);
                 fBlockFound = true;
                 if (limitMostRecent)
                     return fBlockFound;
             }
         }
 
-        if (BlockReading->pprev == NULL) { assert(BlockReading); break; }
-        BlockReading = BlockReading->pprev;
+        if (pindexPrev->pprev == NULL)
+            break;
+
+        pindexPrev = pindexPrev->pprev;
     }
 
     return fBlockFound;

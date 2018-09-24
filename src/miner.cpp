@@ -114,7 +114,7 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn, CWallet* pwallet, 
 
     pblock->nVersion.SetBaseVersion(CBlockHeader::CURRENT_VERSION, nChainId);
 
-    if (fProofOfStake) {
+    if (fProofOfStake && chainActive.Height() >= Params().PoSStartHeight()) {
         pblock->nTime = GetAdjustedTime();
         CBlockIndex* pindexPrev = chainActive.Tip();
         pblock->nBits = GetNextWorkRequired(pindexPrev, pblock);
@@ -124,12 +124,14 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn, CWallet* pwallet, 
         int nHeight = pindexPrev->nHeight + 1;
         uint32_t nTime = pblock->nTime;
         uint32_t nBits = pblock->nBits;
-        if (pwallet->CreateCoinStake(nHeight, nBits, nTime, txCoinStake, nTxNewTime)) {
+        StakePointer stakePointer;
+        if (pwallet->CreateCoinStake(nHeight, nBits, nTime, txCoinStake, nTxNewTime, stakePointer)) {
             pblock->nTime = nTxNewTime;
             pblock->vtx.clear();
             txCoinbase.vout[0].scriptPubKey = CScript();
             pblock->vtx.emplace_back(txCoinbase);
             pblock->vtx.emplace_back(CTransaction(txCoinStake));
+            pblock->stakePointer = stakePointer;
             fStakeFound = true;
         }
 
@@ -384,13 +386,6 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn, CWallet* pwallet, 
 
         // Sign Block
         if (fProofOfStake) {
-            StakePointer stakePointer;
-            if (!pwallet->GetRecentStakePointer(stakePointer)) {
-                LogPrintf("CreateNewBlock() : Failed to find stake pointer\n");
-                return NULL;
-            }
-            pblock->stakePointer = stakePointer;
-
             CTxIn txInCollateralAddress;
             CPubKey pubKeyCollateralAddress;
             CKey keyCollateralAddress;
