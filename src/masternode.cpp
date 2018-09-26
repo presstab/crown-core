@@ -291,7 +291,6 @@ int64_t CMasternode::GetLastPaid() const
 bool CMasternode::GetRecentPaymentBlocks(std::vector<const CBlockIndex*>& vPaymentBlocks, bool limitMostRecent) const
 {
     vPaymentBlocks.clear();
-    if (chainActive.Tip() == NULL) return false;
 
     const CBlockIndex* pindex = chainActive.Tip();
     if (!pindex)
@@ -313,7 +312,7 @@ bool CMasternode::GetRecentPaymentBlocks(std::vector<const CBlockIndex*>& vPayme
                 Search for this payee, with at least 2 votes. This will aid in consensus allowing the network
                 to converge on the same payees quickly, then keep the same schedule.
             */
-            if (masternodePayments.mapMasternodeBlocks[pindexPrev->nHeight].HasPayeeWithVotes(mnpayee, 2)) {
+            if (masternodePayments.mapMasternodeBlocks[pindexPrev->nHeight].GetPayee(mnpayee)) {
                 vPaymentBlocks.emplace_back(pindexPrev);
                 fBlockFound = true;
                 if (limitMostRecent)

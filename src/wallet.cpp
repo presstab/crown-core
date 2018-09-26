@@ -1943,7 +1943,7 @@ bool CWallet::CreateCoinStake(const int nHeight, const uint32_t& nBits, const ui
         if (!mapBlockIndex.count(pointer.hashBlock))
             continue;
 
-        CBlockIndex* pindex = mapBlockIndex.at(stakePointer.hashBlock);
+        CBlockIndex* pindex = mapBlockIndex.at(pointer.hashBlock);
 
         // check that collateral transaction happened long enough before this stake pointer
         if (pindex->nHeight - STAKE_MODIFIER_DEPTH <= nActiveNodeInputHeight)
@@ -1988,7 +1988,7 @@ bool CWallet::GetRecentStakePointers(std::vector<StakePointer>& vStakePointers)
 
         // get block index of last mn payment
         std::vector<const CBlockIndex*> vBlocksLastPaid;
-        if (!pactiveMN->GetRecentPaymentBlocks(vBlocksLastPaid, true)) {
+        if (!pactiveMN->GetRecentPaymentBlocks(vBlocksLastPaid, false)) {
             LogPrintf("GetRecentStakePointer -- Couldn't find last paid block\n");
             return false;
         }

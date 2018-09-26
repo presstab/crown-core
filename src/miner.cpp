@@ -22,6 +22,8 @@
 #endif
 #include "masternode-payments.h"
 #include "systemnode-payments.h"
+#include "legacysigner.h"
+#include "masternodeconfig.h"
 
 #include <boost/thread.hpp>
 #include <boost/tuple/tuple.hpp>
@@ -129,7 +131,7 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn, CWallet* pwallet, 
             pblock->nTime = nTxNewTime;
             pblock->vtx.clear();
             txCoinbase.vout[0].scriptPubKey = CScript();
-            pblock->vtx.emplace_back(txCoinbase);
+            pblock->vtx.emplace_back(CTransaction(txCoinbase));
             pblock->vtx.emplace_back(CTransaction(txCoinStake));
             pblock->stakePointer = stakePointer;
             fStakeFound = true;
@@ -387,22 +389,41 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn, CWallet* pwallet, 
         // Sign Block
         if (fProofOfStake) {
             CTxIn txInCollateralAddress;
-            CPubKey pubKeyCollateralAddress;
-            CKey keyCollateralAddress;
+            CPubKey pubKeyNode;
+            CKey keyNode;
             std::vector<unsigned char> vchSig;
+            std::string strPrivKey;
 
-            if (fMasterNode && pwallet->GetMasternodeVinAndKeys(txInCollateralAddress, pubKeyCollateralAddress,
-                                                                keyCollateralAddress)) {
-                if (!keyCollateralAddress.Sign(pblock->GetHash(), vchSig)) {
+            auto vMNE = masternodeConfig.getEntries();
+            if (vMNE.empty()) {
+                error("%s: no masternode entry found", __func__);
+                return NULL;
+            }
+
+            for (auto mne : vMNE) {
+                strPrivKey = mne.getPrivKey();
+                break;
+            }
+
+            if (fMasterNode) {
+
+                std::string strErrorMessage;
+                if (!legacySigner.SetKey(strPrivKey, strErrorMessage, keyNode, pubKeyNode)) {
+                    strErrorMessage = strprintf("Can't find keys for masternode - %s", strErrorMessage);
+                    LogPrintf("CMasternodeBroadcast::Create -- %s\n", strErrorMessage);
+                    return NULL;
+                }
+
+                if (!keyNode.Sign(pblock->GetHash(), vchSig)) {
                     LogPrintf("CreateNewBlock() : Failed to sign block as masternode\n");
                     return NULL;
                 }
-            } else if (fSystemNode && pwallet->GetSystemnodeVinAndKeys(txInCollateralAddress, pubKeyCollateralAddress,
-                                                                       keyCollateralAddress)) {
-                if (!keyCollateralAddress.Sign(pblock->GetHash(), vchSig)) {
-                    LogPrintf("CreateNewBlock() : Failed to sign block as systemnode\n");
-                    return NULL;
-                }
+//            } else if (fSystemNode && pwallet->GetSystemnodeVinAndKeys(txInCollateralAddress, pubKeyCollateralAddress,
+//                                                                       keyCollateralAddress)) {
+//                if (!keyCollateralAddress.Sign(pblock->GetHash(), vchSig)) {
+//                    LogPrintf("CreateNewBlock() : Failed to sign block as systemnode\n");
+//                    return NULL;
+//                }
             } else {
                 LogPrintf("CreateNewBlock() : Failed to obtain key for block signature\n");
                 return NULL;
@@ -532,6 +553,11 @@ void BitcoinMiner(CWallet *pwallet, bool fProofOfStake)
 
     try {
         while (true) {
+            if (fProofOfStake && chainActive.Height() + 1 < Params().PoSStartHeight()) {
+                MilliSleep(1000);
+                continue;
+            }
+
             if (Params().MiningRequiresPeers()) {
                 // Busy-wait for the network to come online so we don't waste time mining
                 // on an obsolete chain. In regtest mode we expect to fly solo.
