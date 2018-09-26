@@ -1,6 +1,7 @@
 #ifndef CROWNCOIN_PROOFPOINTER_H
 #define CROWNCOIN_PROOFPOINTER_H
 
+#include <pubkey.h>
 #include "uint256.h"
 #include "serialize.h"
 
@@ -21,13 +22,13 @@ struct StakePointer
     uint256 hashBlock;
     uint256 txid;
     unsigned int nPos;
-    uint160 hashPubKey;
+    CPubKey pubKeyProofOfStake;
 
     void SetNull()
     {
         hashBlock = uint256();
         txid = uint256();
-        hashPubKey = uint160();
+        pubKeyProofOfStake = CPubKey();
         nPos = 0;
     }
 
@@ -38,7 +39,7 @@ struct StakePointer
         READWRITE(hashBlock);
         READWRITE(txid);
         READWRITE(nPos);
-        READWRITE(hashPubKey);
+        READWRITE(pubKeyProofOfStake);
     }
 };
 

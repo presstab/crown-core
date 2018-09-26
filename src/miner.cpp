@@ -116,7 +116,7 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn, CWallet* pwallet, 
 
     pblock->nVersion.SetBaseVersion(CBlockHeader::CURRENT_VERSION, nChainId);
 
-    if (fProofOfStake && chainActive.Height() >= Params().PoSStartHeight()) {
+    if (fProofOfStake && chainActive.Height() + 1 >= Params().PoSStartHeight()) {
         pblock->nTime = GetAdjustedTime();
         CBlockIndex* pindexPrev = chainActive.Tip();
         pblock->nBits = GetNextWorkRequired(pindexPrev, pblock);
@@ -392,19 +392,7 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn, CWallet* pwallet, 
             CPubKey pubKeyNode;
             CKey keyNode;
             std::vector<unsigned char> vchSig;
-            std::string strPrivKey;
-
-            auto vMNE = masternodeConfig.getEntries();
-            if (vMNE.empty()) {
-                error("%s: no masternode entry found", __func__);
-                return NULL;
-            }
-
-            for (auto mne : vMNE) {
-                strPrivKey = mne.getPrivKey();
-                break;
-            }
-
+            std::string strPrivKey = strMasterNodePrivKey;
             if (fMasterNode) {
 
                 std::string strErrorMessage;
@@ -553,7 +541,7 @@ void BitcoinMiner(CWallet *pwallet, bool fProofOfStake)
 
     try {
         while (true) {
-            if (fProofOfStake && chainActive.Height() + 1 < Params().PoSStartHeight()) {
+            if (fProofOfStake && chainActive.Height() + 1 < Params().PoSStartHeight() || !fMasterNode) {
                 MilliSleep(1000);
                 continue;
             }
@@ -583,7 +571,8 @@ void BitcoinMiner(CWallet *pwallet, bool fProofOfStake)
             if (!pblocktemplate)
             {
                 LogPrintf("Error in CrownnMiner: Keypool ran out, please call keypoolrefill before restarting the mining thread\n");
-                return;
+                MilliSleep(1000);
+                continue;
             }
             CBlock *pblock = &pblocktemplate->block;
             IncrementExtraNonce(pblock, pindexPrev, nExtraNonce);

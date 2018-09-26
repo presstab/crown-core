@@ -1969,6 +1969,11 @@ bool CWallet::CreateCoinStake(const int nHeight, const uint32_t& nBits, const ui
         txCoinStake.vout.emplace_back(out);
         nTxNewTime = kernel.GetTime();
         stakePointer = pointer;
+
+        CTxIn txin;
+        txin.scriptSig << OP_PROOFOFSTAKE;
+        txCoinStake.vin.emplace_back(txin);
+
         return true;
     }
 
@@ -2008,7 +2013,7 @@ bool CWallet::GetRecentStakePointers(std::vector<StakePointer>& vStakePointers)
                     stakePointer.hashBlock = pindex->GetBlockHash();
                     stakePointer.txid = tx.GetHash();
                     stakePointer.nPos = 1;
-                    stakePointer.hashPubKey = pactiveMN->pubkey.GetID();
+                    stakePointer.pubKeyProofOfStake = pactiveMN->pubkey;
                     vStakePointers.emplace_back(stakePointer);
                     found = true;
                     continue;
@@ -2045,7 +2050,7 @@ bool CWallet::GetRecentStakePointers(std::vector<StakePointer>& vStakePointers)
                     stakePointer.hashBlock = pindex->GetBlockHash();
                     stakePointer.txid = tx.GetHash();
                     stakePointer.nPos = 1;
-                    stakePointer.hashPubKey = pactiveSN->pubkey.GetID();
+                    stakePointer.pubKeyProofOfStake = pactiveSN->pubkey;
                     vStakePointers.emplace_back(stakePointer);
                     found = true;
                     continue;

@@ -2101,9 +2101,13 @@ bool CheckBlockProofPointer(const CBlock& block, CPubKey& pubkeyMasternode, COut
             if (!ExtractDestination(tx.vout[stakePointer.nPos].scriptPubKey, dest))
                 return error("%s: failed to get destination from scriptPubKey", __func__);
 
-//            if (CBitcoinAddress(stakePointer.hashPubKey).ToString() != CBitcoinAddress(dest).ToString())
-//                return error("%s: Pubkeyhash from proof does not match stakepointer", __func__);
+            CBitcoinAddress addressProof(stakePointer.pubKeyProofOfStake.GetID());
+            CBitcoinAddress addressReward(dest);
 
+            if (addressProof.ToString() != addressReward.ToString())
+                return error("%s: Pubkey in proof pointer = %s, pubkey in reward payment = %s", __func__, addressProof.ToString(), addressReward.ToString());
+
+            pubkeyMasternode = stakePointer.pubKeyProofOfStake;
             outpoint = COutPoint(stakePointer.txid, stakePointer.nPos);
 
             found = true;

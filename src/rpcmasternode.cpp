@@ -79,7 +79,7 @@ Value getstakepointers(const Array& params, bool fHelp)
     for (auto p : vStakePointers) {
         Object obj;
         obj.push_back(Pair("blockhash", p.hashBlock.GetHex()));
-        obj.push_back(Pair("hashpubkey", p.hashPubKey.GetHex()));
+        obj.push_back(Pair("hashpubkey", p.pubKeyProofOfStake.GetID().GetHex()));
         obj.push_back(Pair("pos", (int64_t)p.nPos));
         obj.push_back(Pair("txid", p.txid.GetHex()));
         ret.push_back(obj);
