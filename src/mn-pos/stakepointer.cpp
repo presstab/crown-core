@@ -1,4 +1,6 @@
-//
-// Created by pt on 9/26/18.
-//
+#include "stakepointer.h"
 
+bool StakePointer::VerifyCollateralSignOver() const
+{
+    return pubKeyCollateral.Verify(pubKeyProofOfStake.GetHash(), vchSigCollateralSignOver);
+}
