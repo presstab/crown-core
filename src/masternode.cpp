@@ -441,7 +441,7 @@ bool CMasternodeBroadcast::Create(std::string strService, std::string strKeyMast
     return Create(txin, CService(strService), keyCollateralAddress, pubKeyCollateralAddress, keyMasternodeNew, pubKeyMasternodeNew, strErrorMessage, mnb);
 }
 
-bool CMasternodeBroadcast::Create(CTxIn txin, CService service, CKey keyCollateralAddress, CPubKey pubKeyCollateralAddress, CKey keyMasternodeNew, CPubKey pubKeyMasternodeNew, std::string &strErrorMessage, CMasternodeBroadcast &mnb) {
+bool CMasternodeBroadcast::Create(CTxIn txin, CService service, CKey keyCollateralAddress, CPubKey pubKeyCollateralAddress, CKey keyMasternodeNew, CPubKey pubKeyMasternodeNew, bool fSignOver, std::string &strErrorMessage, CMasternodeBroadcast &mnb) {
     // wait for reindex and/or import to finish
     if (fImporting || fReindex) return false;
 
@@ -468,6 +468,15 @@ bool CMasternodeBroadcast::Create(CTxIn txin, CService service, CKey keyCollater
         LogPrintf("CMasternodeBroadcast::Create -- %s\n", strErrorMessage);
         mnb = CMasternodeBroadcast();
         return false;
+    }
+
+    //Additional signature for use in proof of stake
+    if (fSignOver) {
+        if (!keyCollateralAddress.Sign(pubKeyMasternodeNew.GetHash(), vchSigSignOver)) {
+            LogPrintf("CMasternodeBroadcast::Create failed signover\n");
+            mnb = CMasternodeBroadcast();
+            return false;
+        }
     }
 
     return true;

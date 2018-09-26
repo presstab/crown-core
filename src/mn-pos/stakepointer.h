@@ -17,12 +17,15 @@
  * @param hashPubKey The CKeyID (or pubkeyhash) of the masternode's payment
  */
 
-struct StakePointer
+class StakePointer
 {
+public:
     uint256 hashBlock;
     uint256 txid;
     unsigned int nPos;
     CPubKey pubKeyProofOfStake;
+    CPubKey pubKeyCollateral; // The public key to the collateral address
+    std::vector<unsigned char> vchSigCollateralSignOver; // Signature signed from collateral pubkey giving permission to pubKeyProofOfStake
 
     void SetNull()
     {
@@ -32,6 +35,8 @@ struct StakePointer
         nPos = 0;
     }
 
+    bool VerifyCollateralSignOver() const;
+
     ADD_SERIALIZE_METHODS;
 
     template <typename Stream, typename Operation>
@@ -40,6 +45,8 @@ struct StakePointer
         READWRITE(txid);
         READWRITE(nPos);
         READWRITE(pubKeyProofOfStake);
+        READWRITE(pubKeyCollateral);
+        READWRITE(vchSigCollateralSignOver);
     }
 };
 

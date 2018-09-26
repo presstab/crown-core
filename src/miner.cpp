@@ -27,6 +27,7 @@
 
 #include <boost/thread.hpp>
 #include <boost/tuple/tuple.hpp>
+#include <mn-pos/stakevalidation.h>
 
 using namespace std;
 
@@ -402,6 +403,11 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn, CWallet* pwallet, 
                     return NULL;
                 }
 
+                if (pubKeyNode != pblock->stakePointer.pubKeyProofOfStake) {
+                    LogPrintf("%s: using wrong pubkey. pointer=%s pubkeynode=%s\n", __func__, pblock->stakePointer.pubKeyProofOfStake.GetHash().GetHex(), pubKeyNode.GetHash().GetHex());
+                    return NULL;
+                }
+
                 if (!keyNode.Sign(pblock->GetHash(), vchSig)) {
                     LogPrintf("CreateNewBlock() : Failed to sign block as masternode\n");
                     return NULL;
@@ -417,11 +423,15 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn, CWallet* pwallet, 
                 return NULL;
             }
             pblock->vchBlockSig = vchSig;
+            if (!CheckBlockSignature(*pblock, pblock->stakePointer.pubKeyProofOfStake)) {
+                LogPrintf("%s: Block signature is not valid\n", __func__);
+                return NULL;
+            }
         }
 
         CValidationState state;
         if (!TestBlockValidity(state, *pblock, pindexPrev, false, false)) {
-            LogPrintf("CreateNewBlock() : TestBlockValidity failed");
+            LogPrintf("CreateNewBlock() : TestBlockValidity failed\n");
             return NULL;
         }
     }
@@ -575,7 +585,8 @@ void BitcoinMiner(CWallet *pwallet, bool fProofOfStake)
                 continue;
             }
             CBlock *pblock = &pblocktemplate->block;
-            IncrementExtraNonce(pblock, pindexPrev, nExtraNonce);
+            if (!fProofOfStake)
+                IncrementExtraNonce(pblock, pindexPrev, nExtraNonce);
 
             //Proof of Stake Miner
             if (fProofOfStake) {

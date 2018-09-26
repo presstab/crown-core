@@ -276,12 +276,15 @@ public:
 class CMasternodeBroadcast : public CMasternode
 {
 public:
+    bool fSignOver;
+    std::vector<unsigned char> vchSigSignOver;
+
     CMasternodeBroadcast();
     CMasternodeBroadcast(CService newAddr, CTxIn newVin, CPubKey newPubkey, CPubKey newPubkey2, int protocolVersionIn);
     CMasternodeBroadcast(const CMasternode& mn);
 
     /// Create Masternode broadcast, needs to be relayed manually after that
-    static bool Create(CTxIn txin, CService service, CKey keyCollateral, CPubKey pubKeyCollateral, CKey keyMasternodeNew, CPubKey pubKeyMasternodeNew, std::string &strErrorMessage, CMasternodeBroadcast &mnb);
+    static bool Create(CTxIn txin, CService service, CKey keyCollateral, CPubKey pubKeyCollateral, CKey keyMasternodeNew, CPubKey pubKeyMasternodeNew, bool fSignOver, std::string &strErrorMessage, CMasternodeBroadcast &mnb);
     static bool Create(std::string strService, std::string strKey, std::string strTxHash, std::string strOutputIndex, std::string& strErrorMessage, CMasternodeBroadcast &mnb, bool fOffline = false);
 
 
@@ -305,6 +308,10 @@ public:
         READWRITE(protocolVersion);
         READWRITE(lastPing);
         READWRITE(nLastDsq);
+        READWRITE(fSignOver);
+        if (fSignOver) {
+            READWRITE(vchSigSignOver);
+        }
     }
 
     uint256 GetHash() const

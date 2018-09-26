@@ -2092,7 +2092,7 @@ bool CheckBlockProofPointer(const CBlock& block, CPubKey& pubkeyMasternode, COut
         return error("%s: Failed to read block from disk", __func__);
 
     bool found = false;
-    for (const auto& tx : block.vtx) {
+    for (const auto& tx : blockFrom.vtx) {
         if (tx.GetHash() == stakePointer.txid) {
             if (tx.vout.size() <= stakePointer.nPos)
                 return error("%s: vout too small", __func__);
@@ -2101,15 +2101,25 @@ bool CheckBlockProofPointer(const CBlock& block, CPubKey& pubkeyMasternode, COut
             if (!ExtractDestination(tx.vout[stakePointer.nPos].scriptPubKey, dest))
                 return error("%s: failed to get destination from scriptPubKey", __func__);
 
+            // The block can either be signed by the collateral key, or the masternode key if it has a sig with it verifying sign over
             CBitcoinAddress addressProof(stakePointer.pubKeyProofOfStake.GetID());
             CBitcoinAddress addressReward(dest);
+            CBitcoinAddress addressCollateralCheck(stakePointer.pubKeyCollateral.GetID());
 
-            if (addressProof.ToString() != addressReward.ToString())
-                return error("%s: Pubkey in proof pointer = %s, pubkey in reward payment = %s", __func__, addressProof.ToString(), addressReward.ToString());
+            if (addressCollateralCheck.ToString() != addressReward.ToString())
+                return error("%s: Wrong pubkeys: Pubkey Collateral in proof pointer = %s, pubkey in reward payment = %s", __func__, addressCollateralCheck.ToString(), addressReward.ToString());
 
-            pubkeyMasternode = stakePointer.pubKeyProofOfStake;
+            pubkeyMasternode = stakePointer.pubKeyCollateral;
+
+            if (addressProof.ToString() != addressReward.ToString()) {
+                //Check if the key was signed over to another privkey
+                if (!stakePointer.VerifyCollateralSignOver())
+                    return error("%s: Collateral signover is not validated!", __func__);
+
+                pubkeyMasternode = stakePointer.pubKeyProofOfStake;
+            }
+
             outpoint = COutPoint(stakePointer.txid, stakePointer.nPos);
-
             found = true;
             break;
         }
