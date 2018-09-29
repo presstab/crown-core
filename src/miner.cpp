@@ -24,6 +24,7 @@
 #include "systemnode-payments.h"
 #include "legacysigner.h"
 #include "masternodeconfig.h"
+#include "mn-pos/stakepointer.h"
 
 #include <boost/thread.hpp>
 #include <boost/tuple/tuple.hpp>
@@ -401,6 +402,13 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn, CWallet* pwallet, 
                     strErrorMessage = strprintf("Can't find keys for masternode - %s", strErrorMessage);
                     LogPrintf("CMasternodeBroadcast::Create -- %s\n", strErrorMessage);
                     return NULL;
+                }
+
+                // Switch keys if using signed over staking key
+                if (!activeMasternode.vchSigSignover.empty()) {
+                    pblock->stakePointer.pubKeyCollateral = pblock->stakePointer.pubKeyProofOfStake;
+                    pblock->stakePointer.pubKeyProofOfStake = pubKeyNode;
+                    pblock->stakePointer.vchSigCollateralSignOver = activeMasternode.vchSigSignover;
                 }
 
                 if (pubKeyNode != pblock->stakePointer.pubKeyProofOfStake) {

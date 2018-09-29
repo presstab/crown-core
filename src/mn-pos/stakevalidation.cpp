@@ -10,6 +10,7 @@
 bool CheckBlockSignature(const CBlock& block, const CPubKey& pubkeyMasternode)
 {
     uint256 hashBlock = block.GetHash();
+
     return pubkeyMasternode.Verify(hashBlock, block.vchBlockSig);
 }
 

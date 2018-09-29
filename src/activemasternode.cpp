@@ -111,7 +111,8 @@ void CActiveMasternode::ManageStatus()
             }
 
             CMasternodeBroadcast mnb;
-            if(!CMasternodeBroadcast::Create(vin, service, keyCollateralAddress, pubKeyCollateralAddress, keyMasternode, pubKeyMasternode, errorMessage, mnb)) {
+            bool fSignOver = true;
+            if(!CMasternodeBroadcast::Create(vin, service, keyCollateralAddress, pubKeyCollateralAddress, keyMasternode, pubKeyMasternode, fSignOver, errorMessage, mnb)) {
                 notCapableReason = "Error on CreateBroadcast: " + errorMessage;
                 LogPrintf("Register::ManageStatus() - %s\n", notCapableReason);
                 return;

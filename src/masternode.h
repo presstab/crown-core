@@ -308,8 +308,8 @@ public:
         READWRITE(protocolVersion);
         READWRITE(lastPing);
         READWRITE(nLastDsq);
-        READWRITE(fSignOver);
-        if (fSignOver) {
+        if (protocolVersion > 70054) {
+            READWRITE(fSignOver);
             READWRITE(vchSigSignOver);
         }
     }

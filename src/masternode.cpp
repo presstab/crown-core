@@ -438,7 +438,8 @@ bool CMasternodeBroadcast::Create(std::string strService, std::string strKeyMast
         return false;
     }
 
-    return Create(txin, CService(strService), keyCollateralAddress, pubKeyCollateralAddress, keyMasternodeNew, pubKeyMasternodeNew, strErrorMessage, mnb);
+    bool fSignOver = true;
+    return Create(txin, CService(strService), keyCollateralAddress, pubKeyCollateralAddress, keyMasternodeNew, pubKeyMasternodeNew, fSignOver, strErrorMessage, mnb);
 }
 
 bool CMasternodeBroadcast::Create(CTxIn txin, CService service, CKey keyCollateralAddress, CPubKey pubKeyCollateralAddress, CKey keyMasternodeNew, CPubKey pubKeyMasternodeNew, bool fSignOver, std::string &strErrorMessage, CMasternodeBroadcast &mnb) {
@@ -472,11 +473,12 @@ bool CMasternodeBroadcast::Create(CTxIn txin, CService service, CKey keyCollater
 
     //Additional signature for use in proof of stake
     if (fSignOver) {
-        if (!keyCollateralAddress.Sign(pubKeyMasternodeNew.GetHash(), vchSigSignOver)) {
+        if (!keyCollateralAddress.Sign(pubKeyMasternodeNew.GetHash(), mnb.vchSigSignOver)) {
             LogPrintf("CMasternodeBroadcast::Create failed signover\n");
             mnb = CMasternodeBroadcast();
             return false;
         }
+        mnb.fSignOver = true;
     }
 
     return true;
@@ -692,6 +694,12 @@ bool CMasternodeBroadcast::CheckInputsAndAdd(int& nDoS) const
     // if it matches our Masternode privkey, then we've been remotely activated
     if(pubkey2 == activeMasternode.pubKeyMasternode && protocolVersion == PROTOCOL_VERSION){
         activeMasternode.EnableHotColdMasterNode(vin, addr);
+        if (fSignOver) {
+            if (pubkey.Verify(pubkey2.GetHash(), vchSigSignOver)) {
+                LogPrintf("%s: Verified pubkey2 signover for staking\n", __func__);
+                activeMasternode.vchSigSignover = vchSigSignOver;
+            }
+        }
     }
 
     bool isLocal = addr.IsRFC1918() || addr.IsLocal();
