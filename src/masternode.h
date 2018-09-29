@@ -136,6 +136,7 @@ public:
     int nScanningErrorCount;
     int nLastScanningErrorBlockHeight;
     CMasternodePing lastPing;
+    std::vector<unsigned char> vchSignover;
 
     CMasternode();
     CMasternode(const CMasternode& other);
@@ -165,6 +166,7 @@ public:
         swap(first.nLastDsq, second.nLastDsq);
         swap(first.nScanningErrorCount, second.nScanningErrorCount);
         swap(first.nLastScanningErrorBlockHeight, second.nLastScanningErrorBlockHeight);
+        swap(first.vchSignover, second.vchSignover);
     }
 
     CMasternode& operator=(CMasternode from)
@@ -188,24 +190,25 @@ public:
     template <typename Stream, typename Operation>
     inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion)
     {
-            LOCK(cs);
+        LOCK(cs);
 
-            READWRITE(vin);
-            READWRITE(addr);
-            READWRITE(pubkey);
-            READWRITE(pubkey2);
-            READWRITE(sig);
-            READWRITE(sigTime);
-            READWRITE(protocolVersion);
-            READWRITE(activeState);
-            READWRITE(lastPing);
-            READWRITE(cacheInputAge);
-            READWRITE(cacheInputAgeBlock);
-            READWRITE(unitTest);
-            READWRITE(allowFreeTx);
-            READWRITE(nLastDsq);
-            READWRITE(nScanningErrorCount);
-            READWRITE(nLastScanningErrorBlockHeight);
+        READWRITE(vin);
+        READWRITE(addr);
+        READWRITE(pubkey);
+        READWRITE(pubkey2);
+        READWRITE(sig);
+        READWRITE(sigTime);
+        READWRITE(protocolVersion);
+        READWRITE(activeState);
+        READWRITE(lastPing);
+        READWRITE(cacheInputAge);
+        READWRITE(cacheInputAgeBlock);
+        READWRITE(unitTest);
+        READWRITE(allowFreeTx);
+        READWRITE(nLastDsq);
+        READWRITE(nScanningErrorCount);
+        READWRITE(nLastScanningErrorBlockHeight);
+        READWRITE(vchSignover);
     }
 
     int64_t SecondsSincePayment() const;

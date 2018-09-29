@@ -698,7 +698,11 @@ bool CMasternodeBroadcast::CheckInputsAndAdd(int& nDoS) const
             if (pubkey.Verify(pubkey2.GetHash(), vchSigSignOver)) {
                 LogPrintf("%s: Verified pubkey2 signover for staking\n", __func__);
                 activeMasternode.vchSigSignover = vchSigSignOver;
+            } else {
+                LogPrintf("%s: Failed to verify pubkey on signover!\n", __func__);
             }
+        } else {
+            LogPrintf("%s: NOT SIGNOVER!\n", __func__);
         }
     }
 
