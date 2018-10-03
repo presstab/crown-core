@@ -292,8 +292,6 @@ bool CMasternode::GetRecentPaymentBlocks(std::vector<const CBlockIndex*>& vPayme
 {
     vPaymentBlocks.clear();
 
-
-
     int nMinimumValidBlockHeight = chainActive.Height() - PAYMENT_BLOCK_DEPTH;
     if (nMinimumValidBlockHeight < 1)
         nMinimumValidBlockHeight = 1;
@@ -305,20 +303,16 @@ bool CMasternode::GetRecentPaymentBlocks(std::vector<const CBlockIndex*>& vPayme
 
     bool fBlockFound = false;
     while (chainActive.Next(pindex)) {
+        CBlock block;
+        if (!ReadBlockFromDisk(block, pindex))
+            continue;
 
-        if (masternodePayments.mapMasternodeBlocks.count(pindex->nHeight)){
-            CBlock block;
-            if (!ReadBlockFromDisk(block, pindex))
-                continue;
-
-            if (block.vtx[0].vout.size() > 1 && block.vtx[0].vout[1].scriptPubKey == mnpayee) {
-                vPaymentBlocks.emplace_back(pindex);
-                fBlockFound = true;
-                if (limitMostRecent)
-                    return fBlockFound;
-            }
+        if (block.vtx[0].vout.size() > 1 && block.vtx[0].vout[1].scriptPubKey == mnpayee) {
+            vPaymentBlocks.emplace_back(pindex);
+            fBlockFound = true;
+            if (limitMostRecent)
+                return fBlockFound;
         }
-
         pindex = chainActive.Next(pindex);
     }
 
@@ -474,6 +468,7 @@ bool CMasternodeBroadcast::Create(CTxIn txin, CService service, CKey keyCollater
             mnb = CMasternodeBroadcast();
             return false;
         }
+        LogPrintf("%s: Signed over to key %s\n", __func__, pubKeyMasternodeNew.GetID().GetHex());
         mnb.fSignOver = true;
     }
 

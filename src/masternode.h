@@ -311,10 +311,10 @@ public:
         READWRITE(protocolVersion);
         READWRITE(lastPing);
         READWRITE(nLastDsq);
-        if (protocolVersion > 70054) {
+
             READWRITE(fSignOver);
             READWRITE(vchSigSignOver);
-        }
+
     }
 
     uint256 GetHash() const

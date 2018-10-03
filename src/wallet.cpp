@@ -1961,6 +1961,8 @@ bool CWallet::CreateCoinStake(const int nHeight, const uint32_t& nBits, const ui
             continue;
 
         LogPrintf("%s: Found valid kernel for mn/sn collateral %s\n", __func__, pvinActiveNode->prevout.ToString());
+        LogPrintf("%s: Target= %s\n", __func__, nTarget.GetHex());
+        LogPrintf("%s: Hash=   %s\n", __func__, kernel.GetStakeHash().GetHex());
 
         //Add stake payment to coinstake tx
         CAmount nBlockReward = GetBlockValue(nHeight, 0); //Do not add fees until after they are packaged into the block
