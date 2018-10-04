@@ -134,6 +134,7 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn, CWallet* pwallet, 
             pblock->vtx.clear();
             txCoinbase.vout[0].scriptPubKey = CScript();
             pblock->vtx.emplace_back(CTransaction(txCoinbase));
+            txCoinStake.vin[0].scriptSig << nHeight << OP_0;
             pblock->vtx.emplace_back(CTransaction(txCoinStake));
             pblock->stakePointer = stakePointer;
             fStakeFound = true;
