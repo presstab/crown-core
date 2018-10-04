@@ -1555,7 +1555,7 @@ bool WriteBlockToDisk(CBlock& block, CDiskBlockPos& pos)
    both a block and its header.  */
 
 template<typename T>
-static bool ReadBlockOrHeader(T& block, const CDiskBlockPos& pos)
+static bool ReadBlockOrHeader(T& block, const CDiskBlockPos& pos, bool fProofOfStake)
 {
     block.SetNull();
 
@@ -1573,7 +1573,7 @@ static bool ReadBlockOrHeader(T& block, const CDiskBlockPos& pos)
     }
 
     // Check the header
-    if (!CheckProofOfWork(block))
+    if (!fProofOfStake && !CheckProofOfWork(block))
         return error("ReadBlockFromDisk : Errors in block header");
 
     return true;
@@ -1582,7 +1582,7 @@ static bool ReadBlockOrHeader(T& block, const CDiskBlockPos& pos)
 template<typename T>
 static bool ReadBlockOrHeader(T& block, const CBlockIndex* pindex)
 {
-    if (!ReadBlockOrHeader(block, pindex->GetBlockPos()))
+    if (!ReadBlockOrHeader(block, pindex->GetBlockPos(), pindex->IsProofOfStake()))
         return false;
     if (block.GetHash() != pindex->GetBlockHash())
         return error("ReadBlockFromDisk(CBlock&, CBlockIndex*) : GetHash() doesn't match index");
@@ -1591,7 +1591,7 @@ static bool ReadBlockOrHeader(T& block, const CBlockIndex* pindex)
 
 bool ReadBlockFromDisk(CBlock& block, const CDiskBlockPos& pos)
 {
-    return ReadBlockOrHeader(block, pos);
+    return ReadBlockOrHeader(block, pos, block.IsProofOfStake());
 }
 
 bool ReadBlockFromDisk(CBlock& block, const CBlockIndex* pindex)
@@ -3059,9 +3059,9 @@ bool FindUndoPos(CValidationState &state, int nFile, CDiskBlockPos &pos, unsigne
 bool CheckBlockHeader(const CBlockHeader& block, CValidationState& state, bool fCheckPOW)
 {
     // Check proof of work matches claimed amount
-    if (fCheckPOW && !CheckProofOfWork(block))
-        return state.DoS(50, error("CheckBlockHeader() : proof of work failed"),
-                         REJECT_INVALID, "high-hash");
+//    if (fCheckPOW && !CheckProofOfWork(block))
+//        return state.DoS(50, error("CheckBlockHeader() : proof of work failed"),
+//                         REJECT_INVALID, "high-hash");
 
     // Check timestamp
     if (block.GetBlockTime() > GetAdjustedTime() + 2 * 60 * 60)
@@ -3080,7 +3080,7 @@ bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW, bo
 
     // Check that the header is valid (particularly PoW).  This is mostly
     // redundant with the call in AcceptBlockHeader.
-    bool fCheck = !block.IsProofOfStake() && fCheckPOW;
+    bool fCheck = block.IsProofOfWork() && fCheckPOW;
     if (!CheckBlockHeader(block, state, fCheck))
         return false;
 
@@ -3429,6 +3429,11 @@ const CBlockIndex* CBlockIndex::GetAncestor(int height) const
     return const_cast<CBlockIndex*>(this)->GetAncestor(height);
 }
 
+bool CBlockIndex::IsProofOfStake() const
+{
+    return fProofOfStake;
+}
+
 void CBlockIndex::BuildSkip()
 {
     if (pprev)
@@ -3438,7 +3443,7 @@ void CBlockIndex::BuildSkip()
 bool ProcessNewBlock(CValidationState &state, CNode* pfrom, CBlock* pblock, CDiskBlockPos *dbp)
 {
     // Preliminary checks
-    bool checked = CheckBlock(*pblock, state);
+    bool checked = CheckBlock(*pblock, state, pblock->IsProofOfWork());
 
     while(true) {
         TRY_LOCK(cs_main, lockMain);

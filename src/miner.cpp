@@ -420,6 +420,8 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn, CWallet* pwallet, 
                     return NULL;
                 }
 
+                pblock->hashMerkleRoot = pblock->BuildMerkleTree();
+
                 if (!keyNode.Sign(pblock->GetHash(), vchSig)) {
                     LogPrintf("CreateNewBlock() : Failed to sign block as masternode\n");
                     return NULL;
@@ -434,8 +436,8 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn, CWallet* pwallet, 
                 LogPrintf("CreateNewBlock() : Failed to obtain key for block signature\n");
                 return NULL;
             }
+
             pblock->vchBlockSig = vchSig;
-            pblock->hashMerkleRoot = pblock->BuildMerkleTree();
             if (!CheckBlockSignature(*pblock, pblock->stakePointer.pubKeyProofOfStake)) {
                 LogPrintf("%s: Block signature is not valid\n", __func__);
                 return NULL;
