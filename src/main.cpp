@@ -2897,7 +2897,7 @@ bool ReconsiderBlock(CValidationState& state, CBlockIndex *pindex) {
     return true;
 }
 
-CBlockIndex* AddToBlockIndex(const CBlockHeader& block)
+CBlockIndex* AddToBlockIndex(const CBlockHeader& block, bool fProofOfStake)
 {
     // Check for duplicate
     uint256 hash = block.GetHash();
@@ -2925,6 +2925,8 @@ CBlockIndex* AddToBlockIndex(const CBlockHeader& block)
     pindexNew->RaiseValidity(BLOCK_VALID_TREE);
     if (pindexBestHeader == NULL || pindexBestHeader->nChainWork < pindexNew->nChainWork)
         pindexBestHeader = pindexNew;
+
+    pindexNew->fProofOfStake = fProofOfStake;
 
     setDirtyBlockIndex.insert(pindexNew);
 
@@ -3320,7 +3322,7 @@ bool AcceptBlockHeader(const CBlockHeader& block, bool fProofOfStake, CValidatio
         return false;
 
     if (pindex == NULL)
-        pindex = AddToBlockIndex(block);
+        pindex = AddToBlockIndex(block, fProofOfStake);
 
     if (ppindex)
         *ppindex = pindex;
@@ -3823,7 +3825,7 @@ bool InitBlockIndex() {
                 return error("LoadBlockIndex() : FindBlockPos failed");
             if (!WriteBlockToDisk(block, blockPos))
                 return error("LoadBlockIndex() : writing genesis block to disk failed");
-            CBlockIndex *pindex = AddToBlockIndex(block);
+            CBlockIndex *pindex = AddToBlockIndex(block, block.IsProofOfStake());
             if (!ReceivedBlockTransactions(block, state, pindex, blockPos))
                 return error("LoadBlockIndex() : genesis block not accepted");
             if (!ActivateBestChain(state, &block))
