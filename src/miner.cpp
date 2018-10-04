@@ -384,6 +384,7 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn, CWallet* pwallet, 
         pblock->hashPrevBlock  = pindexPrev->GetBlockHash();
         if (!fProofOfStake)
             UpdateTime(pblock, pindexPrev);
+
         pblock->nBits          = GetNextWorkRequired(pindexPrev, pblock);
         pblock->nNonce         = 0;
         pblocktemplate->vTxSigOps[0] = GetLegacySigOpCount(pblock->vtx[0]);
@@ -409,6 +410,9 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn, CWallet* pwallet, 
                     pblock->stakePointer.pubKeyCollateral = pblock->stakePointer.pubKeyProofOfStake;
                     pblock->stakePointer.pubKeyProofOfStake = pubKeyNode;
                     pblock->stakePointer.vchSigCollateralSignOver = activeMasternode.vchSigSignover;
+                    LogPrintf("%s signover set\n", __func__);
+                } else {
+                    LogPrintf("%s signover NOT set\n", __func__);
                 }
 
                 if (pubKeyNode != pblock->stakePointer.pubKeyProofOfStake) {
@@ -431,6 +435,7 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn, CWallet* pwallet, 
                 return NULL;
             }
             pblock->vchBlockSig = vchSig;
+            pblock->hashMerkleRoot = pblock->BuildMerkleTree();
             if (!CheckBlockSignature(*pblock, pblock->stakePointer.pubKeyProofOfStake)) {
                 LogPrintf("%s: Block signature is not valid\n", __func__);
                 return NULL;
@@ -559,25 +564,25 @@ void BitcoinMiner(CWallet *pwallet, bool fProofOfStake)
 
     try {
         while (true) {
-            if (fProofOfStake && chainActive.Height() + 1 < Params().PoSStartHeight() || !fMasterNode) {
-                MilliSleep(1000);
-                continue;
-            }
+//            if (fProofOfStake && chainActive.Height() + 1 < Params().PoSStartHeight() || !fMasterNode) {
+//                MilliSleep(1000);
+//                continue;
+//            }
 
-            if (Params().MiningRequiresPeers()) {
-                // Busy-wait for the network to come online so we don't waste time mining
-                // on an obsolete chain. In regtest mode we expect to fly solo.
-                do {
-                    bool fvNodesEmpty;
-                    {
-                        LOCK(cs_vNodes);
-                        fvNodesEmpty = vNodes.empty();
-                    }
-                    if (!fvNodesEmpty && !IsInitialBlockDownload())
-                        break;
-                    MilliSleep(1000);
-                } while (true);
-            }
+//            if (Params().MiningRequiresPeers()) {
+//                // Busy-wait for the network to come online so we don't waste time mining
+//                // on an obsolete chain. In regtest mode we expect to fly solo.
+//                do {
+//                    bool fvNodesEmpty;
+//                    {
+//                        LOCK(cs_vNodes);
+//                        fvNodesEmpty = vNodes.empty();
+//                    }
+//                    if (!fvNodesEmpty && !IsInitialBlockDownload())
+//                        break;
+//                    MilliSleep(1000);
+//                } while (true);
+//            }
 
             //
             // Create new block

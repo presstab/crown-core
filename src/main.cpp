@@ -3080,7 +3080,8 @@ bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW, bo
 
     // Check that the header is valid (particularly PoW).  This is mostly
     // redundant with the call in AcceptBlockHeader.
-    if (!CheckBlockHeader(block, state, fCheckPOW))
+    bool fCheck = !block.IsProofOfStake() && fCheckPOW;
+    if (!CheckBlockHeader(block, state, fCheck))
         return false;
 
     // Check the merkle root.

@@ -60,6 +60,6 @@ void Kernel::SetStakeTime(uint64_t nTime)
 
 std::string Kernel::ToString()
 {
-    return strprintf("OutPoint: %s:%d Modifier=%s timeblockfrom=%d time=%d", m_outpoint.first.GetHex(),
-                                m_outpoint.second, m_nStakeModifier.GetHex(), m_nTimeBlockFrom, m_nTimeStake);
+    return strprintf("OutPoint: %s:%d Modifier=%s timeblockfrom=%d time=%d amount=%d", m_outpoint.first.GetHex(),
+                                m_outpoint.second, m_nStakeModifier.GetHex(), m_nTimeBlockFrom, m_nTimeStake, m_nAmount);
 }

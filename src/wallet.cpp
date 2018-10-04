@@ -21,6 +21,7 @@
 #include "timedata.h"
 #include "util.h"
 #include "utilmoneystr.h"
+#include "mn-pos/stakepointer.h"
 
 #include <assert.h>
 
@@ -1936,8 +1937,6 @@ bool CWallet::CreateCoinStake(const int nHeight, const uint32_t& nBits, const ui
         return false;
     }
 
-    auto pOutpoint = std::make_pair(pvinActiveNode->prevout.hash, pvinActiveNode->prevout.n);
-
     //Create kernels for each valid stake pointer and see if any create a successful proof
     for (auto pointer : vStakePointers) {
         if (!mapBlockIndex.count(pointer.hashBlock))
@@ -1954,6 +1953,7 @@ bool CWallet::CreateCoinStake(const int nHeight, const uint32_t& nBits, const ui
         if (nStakeModifier == uint256())
             continue;
 
+        auto pOutpoint = std::make_pair(pointer.txid, pointer.nPos);
         Kernel kernel(pOutpoint, nAmountMN, nStakeModifier, nTime, nTxNewTime);
         uint256 nTarget = ArithToUint256(arith_uint256().SetCompact(nBits));
 
