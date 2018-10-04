@@ -31,7 +31,7 @@ bool CheckProofOfStake(const CBlock& block, const CBlockIndex* prevBlock, const 
 
     uint256 nStakeModifier = prevBlock->GetAncestor(prevBlock->nHeight - 100)->GetBlockHash();
 
-    Kernel kernel(pairOut, nAmountCollateral, uint256(), prevBlock->GetBlockTime(), block.nTime);
+    Kernel kernel(pairOut, nAmountCollateral, nStakeModifier, prevBlock->GetBlockTime(), block.nTime);
 
     bool fNegative;
     bool fOverflow;
@@ -42,6 +42,8 @@ bool CheckProofOfStake(const CBlock& block, const CBlockIndex* prevBlock, const 
     // Check range
     if (fNegative || bnTarget == 0 || fOverflow)
         return error("CheckProofOfStake() : nBits below minimum stake");
+
+    LogPrintf("%s : %s\n", __func__, kernel.ToString());
 
     return kernel.IsValidProof(ArithToUint256(bnTarget));
 }

@@ -1914,7 +1914,7 @@ bool CWallet::CreateCoinStake(const int nHeight, const uint32_t& nBits, const ui
         pvinActiveNode = &activeStakingNode->vin;
         ppubkeyActiveNode = &activeStakingNode->pubkey;
         nActiveNodeInputHeight = chainActive.Height() - activeStakingNode->GetMasternodeInputAge();
-        nAmountMN = static_cast<CAmount>(MASTERNODE_COLLATERAL);
+        nAmountMN = static_cast<CAmount>(MASTERNODE_COLLATERAL * COIN);
 
     } else if (fSystemNode) {
         CSystemnode* activeStakingNode;
@@ -1929,7 +1929,7 @@ bool CWallet::CreateCoinStake(const int nHeight, const uint32_t& nBits, const ui
         pvinActiveNode = &activeStakingNode->vin;
         ppubkeyActiveNode = &activeStakingNode->pubkey;
         nActiveNodeInputHeight = chainActive.Height() - activeStakingNode->GetSystemnodeInputAge();
-        nAmountMN = static_cast<CAmount>(SYSTEMNODE_COLLATERAL);
+        nAmountMN = static_cast<CAmount>(SYSTEMNODE_COLLATERAL * COIN);
 
     } else {
         LogPrintf("CreateCoinStake -- Must be masternode or system to create coin stake!\n");
@@ -1961,8 +1961,7 @@ bool CWallet::CreateCoinStake(const int nHeight, const uint32_t& nBits, const ui
             continue;
 
         LogPrintf("%s: Found valid kernel for mn/sn collateral %s\n", __func__, pvinActiveNode->prevout.ToString());
-        LogPrintf("%s: Target= %s\n", __func__, nTarget.GetHex());
-        LogPrintf("%s: Hash=   %s\n", __func__, kernel.GetStakeHash().GetHex());
+        LogPrintf("%s: %s\n", __func__, kernel.ToString());
 
         //Add stake payment to coinstake tx
         CAmount nBlockReward = GetBlockValue(nHeight, 0); //Do not add fees until after they are packaged into the block
