@@ -4,6 +4,7 @@
 #include <primitives/block.h>
 #include <chain.h>
 #include <pubkey.h>
+#include <wallet.h>
 #include <util.h>
 #include <arith_uint256.h>
 
@@ -25,8 +26,10 @@ bool CheckProofOfStake(const CBlock& block, const CBlockIndex* prevBlock, const 
     CAmount nSNPayment = txPayment.vout[2].nValue;
 
     auto pairOut = std::make_pair(outpoint.hash, outpoint.n);
+    CAmount nAmountCollateral = (outpoint.n == 1 ? MASTERNODE_COLLATERAL : SYSTEMNODE_COLLATERAL);
+    nAmountCollateral *= COIN;
 
-    Kernel kernel(pairOut, (outpoint.n == 1 ? nMNPayment : nSNPayment), uint256(), prevBlock->GetBlockTime(), block.nTime);
+    Kernel kernel(pairOut, nAmountCollateral, uint256(), prevBlock->GetBlockTime(), block.nTime);
 
     bool fNegative;
     bool fOverflow;
