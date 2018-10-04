@@ -976,7 +976,7 @@ bool CheckTransaction(const CTransaction& tx, CValidationState &state)
     }
     else if (tx.IsCoinStake())
     {
-        if (tx.vin[0].scriptSig.size() != 1)
+        if (tx.vin[0].scriptSig.size() > 100)
             return state.DoS(100, error("CheckTransactions() : coinstake script size"),
                             REJECT_INVALID, "bad-cs-length");
     }
@@ -1975,8 +1975,11 @@ bool DisconnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex
     if (!blockUndo.ReadFromDisk(pos, pindex->pprev->GetBlockHash()))
         return error("DisconnectBlock() : failure reading undo data");
 
-    if (blockUndo.vtxundo.size() + 1 != block.vtx.size())
-        return error("DisconnectBlock() : block and undo data inconsistent");
+    int nSizeCheck = blockUndo.vtxundo.size() + 1;
+    if (block.IsProofOfStake())
+        nSizeCheck++;
+    if (nSizeCheck != block.vtx.size())
+        return error("DisconnectBlock() : block and undo data inconsistent, check=%d size=%d", nSizeCheck, block.vtx.size());
 
     // undo transactions in reverse order
     for (int i = block.vtx.size() - 1; i >= 0; i--) {
